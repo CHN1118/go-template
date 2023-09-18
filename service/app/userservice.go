@@ -3,10 +3,15 @@ package app
 import (
 	"fmt"
 	"github.com/asaskevich/govalidator"
+	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/valyala/fasthttp"
 	"go-template/models"
 	"go-template/pkg"
+	"go-template/utils"
+	"log"
 	"strconv"
+	"time"
 )
 
 // GetUserList
@@ -137,4 +142,44 @@ func FindUserByNameAndPwd(c *fiber.Ctx) error {
 	fmt.Println(data)
 	fmt.Println(models.CheckToken(data.Identity))
 	return c.JSON(pkg.SuccessResponse(data))
+}
+
+var upgrader = websocket.FastHTTPUpgrader{
+	CheckOrigin: func(ctx *fasthttp.RequestCtx) bool {
+		return true // 注意：这样设置会允许所有的跨域请求，根据您的需求进行调整
+	},
+}
+
+func SendMsg(c *fiber.Ctx) error {
+	err := upgrader.Upgrade(c.Context(), func(conn *websocket.Conn) {
+		defer func(conn *websocket.Conn) {
+			err := conn.Close()
+			if err != nil {
+				fmt.Println("关闭连接失败", err)
+			}
+		}(conn)
+		MsgHandler(conn)
+	})
+
+	if err != nil {
+		fmt.Println("Failed to upgrade:", err)
+		return c.SendStatus(500)
+	}
+
+	return nil
+}
+
+func MsgHandler(ws *websocket.Conn) {
+	for {
+		msg, err := utils.Subscribe(utils.PublishKey)
+		if err != nil {
+			fmt.Println("MsgHandler 发送失败", err)
+		}
+		tm := time.Now().Format("2006-01-02 15:04:05")
+		m := fmt.Sprintf("[ws][%s]:%s", tm, msg)
+		err = ws.WriteMessage(websocket.TextMessage, []byte(m))
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
 }

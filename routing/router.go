@@ -15,4 +15,5 @@ func Setup(f *fiber.App) {
 	appApi.Get("/user/createUser", app.CreateUser)
 	appApi.Get("/user/deleteUser", app.DeleteUser)
 	appApi.Post("/user/updateUser", app.UpdateUser)
+	appApi.Get("/user/sendMsg", app.SendMsg)
 }
