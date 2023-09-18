@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	pkg.DB = database.ConnectDB()
+	pkg.DB, pkg.Red = database.ConnectDB()
 	fiberApp := fiber.New()
 	// 创建一个速率限制器，每秒最多只允许10个请求
 	fiberApp.Use(limiter.New(limiter.Config{

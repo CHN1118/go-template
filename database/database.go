@@ -1,5 +1,10 @@
 package database
 
-import "gorm.io/gorm"
+import (
+	"github.com/go-redis/redis"
+	"gorm.io/gorm"
+)
 
 var DB *gorm.DB
+
+var Red *redis.Client

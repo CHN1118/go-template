@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"github.com/go-redis/redis"
 	"go-template/config"
 	"go-template/models"
 	"gorm.io/driver/postgres"
@@ -14,7 +15,7 @@ import (
 )
 
 // ConnectDB connect to db
-func ConnectDB() *gorm.DB {
+func ConnectDB() (db *gorm.DB, red *redis.Client) {
 	allModels := []interface{}{
 		&models.UserBasic{},
 	}
@@ -52,5 +53,21 @@ func ConnectDB() *gorm.DB {
 	}
 
 	fmt.Println("Database Connected")
-	return DB
+
+	// 初始化redis
+	Red = redis.NewClient(&redis.Options{
+		Addr:         "localhost:6379",
+		Password:     "",
+		DB:           0,
+		PoolSize:     30,
+		MinIdleConns: 30,
+	})
+	pong, err := Red.Ping().Result()
+	if err != nil {
+		fmt.Println("init redis 。。。。", err)
+	} else {
+		fmt.Println(" Redis inited 。。。。", pong)
+	}
+
+	return DB, Red
 }

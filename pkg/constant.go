@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"github.com/go-redis/redis"
 	"gopkg.in/go-playground/validator.v9"
 	"gorm.io/gorm"
 )
@@ -16,3 +17,5 @@ const TOKEN_FAIL = -2
 var Validate = validator.New()
 
 var DB *gorm.DB
+
+var Red *redis.Client
