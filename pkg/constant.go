@@ -1,6 +1,9 @@
 package pkg
 
-import "gopkg.in/go-playground/validator.v9"
+import (
+	"gopkg.in/go-playground/validator.v9"
+	"gorm.io/gorm"
+)
 
 const LOCAL_USERID_UINT = "user_id_uint"
 const LOCAL_USERID_INT64 = "user_id_int64"
@@ -11,3 +14,5 @@ const TOKEN_FAIL = -2
 
 // 检测结构体
 var Validate = validator.New()
+
+var DB *gorm.DB

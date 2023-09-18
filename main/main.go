@@ -6,12 +6,13 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"go-template/database"
+	"go-template/pkg"
 	"go-template/routing"
 	"time"
 )
 
 func main() {
-	database.ConnectDB()
+	pkg.DB = database.ConnectDB()
 	fiberApp := fiber.New()
 	// 创建一个速率限制器，每秒最多只允许10个请求
 	fiberApp.Use(limiter.New(limiter.Config{
@@ -39,7 +40,7 @@ func main() {
 	// 将速率限制器添加到路由中间件中
 	fiberApp.Use(cors.New())
 	routing.Setup(fiberApp)
-	err := fiberApp.Listen(":3000")
+	err := fiberApp.Listen(":8080")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
