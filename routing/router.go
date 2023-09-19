@@ -6,13 +6,14 @@ import (
 	_ "go-template/docs"
 	"go-template/models"
 	"go-template/service/app"
+	"go-template/utils"
 )
 
 func Setup(f *fiber.App) {
 	f.Get("/swagger/*", swagger.HandlerDefault)
 	appApi := f.Group("/api")
 	appApi.Get("/user/findUserByNameAndPwd", app.FindUserByNameAndPwd)
-	appApi.Get("/user/getUserList", app.GetUserList)
+	appApi.Get("/user/getUserList", utils.CheckToken, app.GetUserList)
 	appApi.Get("/user/createUser", app.CreateUser)
 	appApi.Get("/user/deleteUser", app.DeleteUser)
 	appApi.Post("/user/updateUser", app.UpdateUser)

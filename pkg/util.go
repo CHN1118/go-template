@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
-	"time"
 )
 
 // 小写
@@ -37,7 +36,6 @@ func ValidPassword(plainpwd, salt string, password string) bool {
 // token生成
 func GenerateLongHash() string {
 	// 获取当前时间戳
-	timeStr := fmt.Sprintf("%d", time.Now().Unix())
 	str := fmt.Sprintf("%d", RandomString(10))
 	// 使用MD5加密
 	md5Hash := md5.Sum([]byte(str))
@@ -46,6 +44,6 @@ func GenerateLongHash() string {
 	sha256Hash := sha256.Sum256([]byte(str))
 	sha256Str := hex.EncodeToString(sha256Hash[:])
 	// 组合两个哈希值
-	longHash := md5Str + sha256Str + ":" + timeStr
+	longHash := md5Str + sha256Str
 	return longHash
 }

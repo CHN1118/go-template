@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/asaskevich/govalidator"
 	"github.com/fasthttp/websocket"
+	"github.com/go-redis/redis"
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp"
 	"go-template/models"
@@ -125,7 +126,7 @@ func FindUserByNameAndPwd(c *fiber.Ctx) error {
 		})
 
 	}
-	flag := pkg.ValidPassword(password, user.Salt, user.PassWord)
+	flag := pkg.ValidPassword(password, user.Salt, user.PassWord) // 验证密码
 	if !flag {
 		return c.JSON(pkg.JSONResponse{
 			Code: pkg.CodeErr,
@@ -136,11 +137,11 @@ func FindUserByNameAndPwd(c *fiber.Ctx) error {
 		})
 
 	}
-	pwd := pkg.MakePassword(password, user.Salt)
-	data = models.FindUserByNameAndPwd(name, pwd)
-	fmt.Println(data)
-	fmt.Println(models.CheckToken(data.Identity))
-	return c.JSON(pkg.SuccessResponse(data))
+	pwd := pkg.MakePassword(password, user.Salt)  // 加密密码
+	data = models.FindUserByNameAndPwd(name, pwd) // 根据用户名和密码查找用户
+	fmt.Println(data)                             // 打印用户信息
+	fmt.Println(models.CheckToken(data.Identity)) // 打印token
+	return c.JSON(pkg.SuccessResponse(data))      // 返回用户信息
 }
 
 var upgrader = websocket.FastHTTPUpgrader{
@@ -153,7 +154,11 @@ func SendMsg(c *fiber.Ctx) error {
 	log.Println("试图升级到 WebSocket...")
 	err := upgrader.Upgrade(c.Context(), func(netConn *websocket.Conn) {
 		log.Println("WebSocket 连接建立!")
-		defer netConn.Close() // 在函数返回时关闭 WebSocket 连接
+		defer func(netConn *websocket.Conn) {
+			err := netConn.Close()
+			if err != nil {
+			}
+		}(netConn) // 在函数返回时关闭 WebSocket 连接
 
 		// 在此处订阅 Redis
 		sub, err := utils.Subscribe(utils.PublishKey) // 订阅 Redis
@@ -161,7 +166,12 @@ func SendMsg(c *fiber.Ctx) error {
 			log.Printf("订阅 Redis 遇到错误: %v\n", err)
 			return
 		}
-		defer sub.Close() // 在函数返回时关闭 Redis 订阅
+		defer func(sub *redis.PubSub) {
+			err := sub.Close()
+			if err != nil {
+
+			}
+		}(sub) // 在函数返回时关闭 Redis 订阅
 
 		// 使用 goroutine 持续监听来自 Redis 的消息
 		go func() {

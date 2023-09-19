@@ -8,7 +8,6 @@ require (
 	github.com/fasthttp/websocket v1.5.4
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/gofiber/fiber/v2 v2.49.2
-	github.com/gorilla/websocket v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.2
 	github.com/swaggo/swag v1.16.2

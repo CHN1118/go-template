@@ -34,12 +34,13 @@ func ConnectDB() (db *gorm.DB, red *redis.Client) {
 
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", config.Config("DB_HOST"), port, config.Config("DB_USER"), config.Config("DB_PASSWORD"), config.Config("DB_NAME"))
 	fmt.Println(dsn)
-	if DB, err = gorm.Open(postgres.Open(dsn),
+	DB, err := gorm.Open(postgres.Open(dsn),
 		&gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true, // 禁用自动创建外键约束
 			PrepareStmt:                              true, // 开启自动更新UpdatedAt字段
 			Logger:                                   sqlLog,
-		}); err != nil {
+		})
+	if err != nil {
 		panic("failed to connect database")
 	}
 
@@ -55,7 +56,7 @@ func ConnectDB() (db *gorm.DB, red *redis.Client) {
 	fmt.Println("Database Connected")
 
 	// 初始化redis
-	Red = redis.NewClient(&redis.Options{
+	Red := redis.NewClient(&redis.Options{
 		Addr:         "localhost:6379",
 		Password:     "",
 		DB:           0,

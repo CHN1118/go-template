@@ -49,22 +49,25 @@ func Chat(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-
+	//{"content":"你好","targetId":1,"type":"1"}
 	isValid := true // 您应该实现一个函数来检查有效性
 
-	upgrader := websocket.FastHTTPUpgrader{
+	upgraded := websocket.FastHTTPUpgrader{
 		CheckOrigin: func(ctx *fasthttp.RequestCtx) bool {
 			return isValid
 		},
 	}
 
-	err = upgrader.Upgrade(c.Context(), func(conn *websocket.Conn) {
+	err = upgraded.Upgrade(c.Context(), func(conn *websocket.Conn) {
 		log.Println("WebSocket连接!")
 		defer func() {
 			rwLocker.Lock()           // 加写锁
 			delete(clientMap, userId) // 删除节点
 			rwLocker.Unlock()         // 解写锁
-			conn.Close()              // 关闭连接
+			err := conn.Close()
+			if err != nil {
+				return
+			} // 关闭连接
 		}()
 
 		node := &Node{ // 创建节点
@@ -79,7 +82,7 @@ func Chat(c *fiber.Ctx) error {
 		rwLocker.Unlock()        // 解写锁
 
 		go sendProc(node) // 发送协程
-		go recvProc(node) // 接收协程
+		go recProc(node)  // 接收协程
 
 		sendMsg(userId, []byte("欢迎来到聊天系统")) // 发送欢迎消息
 
@@ -105,7 +108,7 @@ func sendProc(node *Node) {
 	}
 }
 
-func recvProc(node *Node) {
+func recProc(node *Node) {
 	for { // 不停地从 WebSocket 中读取数据
 		_, data, err := node.Conn.ReadMessage() // 读取 WebSocket
 		if err != nil {
