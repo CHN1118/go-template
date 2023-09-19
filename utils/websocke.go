@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"github.com/go-redis/redis"
 	"go-template/pkg"
+	"log"
 )
 
 const (
@@ -21,14 +23,14 @@ func Publish(channel string, msg string) error {
 }
 
 // Subscribe 订阅Redis消息
-func Subscribe(channel string) (string, error) {
-	sub := pkg.Red.Subscribe(channel)
-	fmt.Println("Subscribe 。。。。")
-	msg, err := sub.ReceiveMessage()
+func Subscribe(channel string) (*redis.PubSub, error) {
+	log.Println("开始订阅 Redis 消息...")
+	sub := pkg.Red.Subscribe(channel) // 订阅 Redis
+	_, err := sub.Receive()           // 从 Redis 订阅中读取
 	if err != nil {
-		fmt.Println(err)
-		return "", err
+		log.Printf("订阅 Redis 遇到错误: %v\n", err)
+		return nil, err
 	}
-	fmt.Println("Subscribe 。。。。", msg.Payload)
-	return msg.Payload, err
+	log.Println("成功订阅 Redis!")
+	return sub, nil
 }

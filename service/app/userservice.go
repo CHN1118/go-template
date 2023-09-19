@@ -11,7 +11,6 @@ import (
 	"go-template/utils"
 	"log"
 	"strconv"
-	"time"
 )
 
 // GetUserList
@@ -151,35 +150,70 @@ var upgrader = websocket.FastHTTPUpgrader{
 }
 
 func SendMsg(c *fiber.Ctx) error {
-	err := upgrader.Upgrade(c.Context(), func(conn *websocket.Conn) {
-		defer func(conn *websocket.Conn) {
-			err := conn.Close()
-			if err != nil {
-				fmt.Println("关闭连接失败", err)
+	log.Println("试图升级到 WebSocket...")
+	err := upgrader.Upgrade(c.Context(), func(netConn *websocket.Conn) {
+		log.Println("WebSocket 连接建立!")
+		defer netConn.Close() // 在函数返回时关闭 WebSocket 连接
+
+		// 在此处订阅 Redis
+		sub, err := utils.Subscribe(utils.PublishKey) // 订阅 Redis
+		if err != nil {
+			log.Printf("订阅 Redis 遇到错误: %v\n", err)
+			return
+		}
+		defer sub.Close() // 在函数返回时关闭 Redis 订阅
+
+		// 使用 goroutine 持续监听来自 Redis 的消息
+		go func() {
+			for {
+				msg, err := sub.ReceiveMessage() // 从 Redis 订阅中读取
+				if err != nil {
+					log.Printf("从 Redis 订阅中读取时遇到错误: %v\n", err)
+					break
+				}
+
+				// 输出接收到的消息
+				log.Printf("从 Redis 接收到消息: %s\n", msg.Payload)
+
+				// 将消息发送到 WebSocket 客户端
+				err = netConn.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
+				if err != nil {
+					log.Printf("写入 WebSocket 时遇到错误: %v\n", err)
+					break
+				}
 			}
-		}(conn)
-		MsgHandler(conn)
+		}()
+
+		// 在此处，您可以选择继续执行其他 WebSocket 相关的操作，或者只是阻塞直到连接关闭
+		for {
+			if _, _, err := netConn.NextReader(); err != nil {
+				log.Println("WebSocket 连接关闭!")
+				break
+			}
+		}
 	})
 
 	if err != nil {
-		fmt.Println("Failed to upgrade:", err)
+		log.Printf("WebSocket 升级遇到错误: %v\n", err)
 		return c.SendStatus(500)
 	}
-
 	return nil
 }
 
-func MsgHandler(ws *websocket.Conn) {
-	for {
-		msg, err := utils.Subscribe(utils.PublishKey)
-		if err != nil {
-			fmt.Println("MsgHandler 发送失败", err)
-		}
-		tm := time.Now().Format("2006-01-02 15:04:05")
-		m := fmt.Sprintf("[ws][%s]:%s", tm, msg)
-		err = ws.WriteMessage(websocket.TextMessage, []byte(m))
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
-}
+//for {
+//mt, msg, err := netConn.ReadMessage() // 从 WebSocket 中读取
+//if err != nil {
+//log.Println("read:", err)
+//break
+//}
+//log.Printf("recv: %s", msg)
+//err = utils.Publish(utils.PublishKey, string(msg)) // 发布到 Redis
+//if err != nil {
+//return
+//}
+//err = netConn.WriteMessage(mt, msg) // 写入 WebSocket
+//if err != nil {
+//log.Println("write:", err)
+//break
+//}
+//}

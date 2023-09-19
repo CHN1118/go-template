@@ -66,7 +66,7 @@ func ConnectDB() (db *gorm.DB, red *redis.Client) {
 	if err != nil {
 		fmt.Println("init redis 。。。。", err)
 	} else {
-		fmt.Println(" Redis inited 。。。。", pong)
+		fmt.Println(" Redis inited 。。。。", pong) //
 	}
 
 	return DB, Red
